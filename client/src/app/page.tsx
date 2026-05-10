@@ -1,65 +1,97 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("java");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!code) {
+      alert("Code field is required.");
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = await axios.post("http://localhost:3001/reviews", {
+        code,
+        language,
+      });
+      router.push(`/reviews/${response.data._id}`);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <main style={{ maxWidth: "860px", margin: "0 auto" }}>
+      <div
+        className="nes-container with-title is-dark"
+        style={{ marginBottom: "2rem" }}
+      >
+        <p className="title" style={{ fontSize: "10px" }}>
+          CODE REVIEW AI
+        </p>
+        <p
+          style={{ fontSize: "8px", color: "#92cc41", marginBottom: "1.5rem" }}
+        >
+          PASTE YOUR CODE. GET AN AI REVIEW.<span className="blink">_</span>
+        </p>
+
+        <form onSubmit={handleSubmit}>
+          <div className="nes-field" style={{ marginBottom: "1.5rem" }}>
+            <label htmlFor="language" style={{ fontSize: "8px" }}>
+              LANGUAGE
+            </label>
+            <div className="nes-select is-dark">
+              <select
+                id="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                style={{ fontSize: "8px" }}
+              >
+                <option value="java">JAVA</option>
+                <option value="javascript">JAVASCRIPT</option>
+                <option value="python">PYTHON</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="nes-field" style={{ marginBottom: "1.5rem" }}>
+            <label htmlFor="code" style={{ fontSize: "8px" }}>
+              CODE
+            </label>
+            <textarea
+              id="code"
+              className="nes-textarea is-dark"
+              rows={14}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="// paste your code here"
+              style={{
+                fontSize: "10px",
+                fontFamily: "monospace",
+                resize: "none",
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <button
+            type="submit"
+            className={`nes-btn is-success ${loading ? "is-disabled" : ""}`}
+            disabled={loading}
+            style={{ fontSize: "8px" }}
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            {loading ? "ANALYZING..." : "SUBMIT FOR REVIEW"}
+          </button>
+        </form>
+      </div>
+    </main>
   );
 }

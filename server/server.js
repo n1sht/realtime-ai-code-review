@@ -40,7 +40,7 @@ io.on("connection", (socket) => {
 const startServer = async () => {
   await connectDB();
 
-  server.listen(3000, () => {
+  server.listen(3001, () => {
     console.log("Server Started from server.listen!");
   });
 };

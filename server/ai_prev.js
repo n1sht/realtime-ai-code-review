@@ -1,19 +1,16 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const model = genAI.getGenerativeModel({
+  model: "gemini-3.1-flash-lite-preview",
+});
+
 const reviewCode = async (code, language) => {
-  const response = await fetch(`${process.env.BASE_URL}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.MODEL_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "deepseek/deepseek-latest",
-      messages: [
-        {
-          role: "user",
-          content: `You are a code review assistant and your task is to generate a short code review for a given code snippet.
+  const result = await model.generateContent(`
+    You are a code review assistant and your task is to generate a short code review for a given code snippet.
     Your task is to:
       1. Review the code and check if there are any errors
       2. If there are no errors check if the code can be further optimized or written in a better way.
@@ -34,16 +31,12 @@ const reviewCode = async (code, language) => {
       - Line: where in the code
       - Fix: how to fix it with a code example
 
-      If the code is perfect, respond with "No issues found."`,
-        },
-      ],
-    }),
-  });
+      If the code is perfect, respond with "No issues found."
+    `);
 
-  const data = await response.json();
-  // console.log("API Response:", JSON.stringify(data, null, 2));
+  const response = result.response.text();
 
-  return data.choices[0].message.content;
+  return response;
 };
 
 export default reviewCode;
