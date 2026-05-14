@@ -1,77 +1,43 @@
-```
-   _____  .___  _________            .___       __________            .__               
-  /  _  \ |   | \_   ___ \  ____   __| _/____   \______   \ _______  _|__| ______  _  __
- /  /_\  \|   | /    \  \/ /  _ \ / __ |/ __ \   |       _// __ \  \/ /  |/ __ \ \/ \/ /
-/    |    \   | \     \___(  <_> ) /_/ \  ___/   |    |   \  ___/\   /|  \  ___/\     / 
-\____|__  /___|  \______  /\____/\____ |\___  >  |____|_  /\___  >\_/ |__|\___  >\/\_/  
-        \/              \/            \/    \/          \/     \/             \/        
-          __________              .__          ___________.__                           
-          \______   \ ____ _____  |  |         \__    ___/|__| _____   ____             
-           |       _// __ \\__  \ |  |    ______ |    |   |  |/     \_/ __ \            
-           |    |   \  ___/ / __ \|  |__ /_____/ |    |   |  |  Y Y  \  ___/            
-           |____|_  /\___  >____  /____/         |____|   |__|__|_|  /\___  >           
-                  \/     \/     \/                                 \/     \/            
-```
+# CodeReview AI
 
-![demo](./assets/Ai-Code-Working.gif)
+A professional Micro SaaS platform that provides automated code reviews using AI. Built with Next.js and Node.js, the platform offers real-time collaboration, user authentication, and a Bring Your Own Key (BYOK) architecture designed for engineering teams.
 
-# code-review-ai
+## Features
 
-A full-stack app that takes your code, sends it to an AI model, and gives you a structured review back. Built with Next.js on the frontend and Node/Express on the backend, with MongoDB for storage and Socket.IO for real-time comment updates on reviews.
+* Bring Your Own Key (BYOK): Users can configure custom OpenAI-compatible endpoints and API keys in their settings to bypass default quotas and use localized or preferred AI models.
+* Micro SaaS Architecture: Includes full user authentication (JWT and bcrypt), a 5-day trial system, simulated Pro tier upgrades, and persistent review history dashboards.
+* Real-time Collaboration: Powered by WebSockets, allowing teams to share review links and discuss AI feedback in live comment threads.
+* Developer First UI: A custom dark mode design system built from scratch with pure CSS, featuring an IDE-style code editor and semantic structure.
 
----
-
-## What it does
-
-- Paste your code, pick a language (Java, JavaScript, Python)
-- AI reviews it and flags issues with severity levels (critical, warning, suggestion)
-- Reviews are saved and browsable at /reviews
-- Each review has a live comment section powered by WebSockets
-
----
-
-## Stack
+## Tech Stack
 
 **Frontend**
-
-- Next.js 16 (App Router)
-- React 19
-- Tailwind CSS v4
-- NES.css (for the retro pixel UI)
-- react-markdown (renders the AI output)
-- socket.io-client
+* Next.js 16 (App Router)
+* React 19
+* Vanilla CSS (Custom Design System, Inter and JetBrains Mono)
+* Socket.io-client
+* React Markdown
 
 **Backend**
+* Node.js with Express 5
+* MongoDB with Mongoose
+* JWT Authentication and bcryptjs
+* Socket.IO
+* OpenRouter and Custom OpenAI-compatible endpoints
 
-- Node.js + Express 5
-- MongoDB + Mongoose
-- Socket.IO
-- DeepSeek (via OpenRouter API) for the actual AI review
+## Project Structure
 
----
-
-## Project structure
-
-```
+```text
 code-review-ai/
-  client/          Next.js frontend
-  server/          Express backend
+  client/          Next.js frontend application
+  server/          Express REST API and WebSocket server
 ```
 
----
+## Getting Started
 
-## Getting started
+You need Node.js, a MongoDB database (local or Atlas), and an API key from OpenRouter or any OpenAI-compatible provider.
 
-You need Node.js, MongoDB (local or Atlas), and an API key from OpenRouter.
-
-**1. Clone the repo**
-
-```bash
-git clone https://github.com/yourname/code-review-ai.git
-cd code-review-ai
-```
-
-**2. Set up the server**
+### 1. Set up the Backend
 
 ```bash
 cd server
@@ -80,21 +46,22 @@ npm install
 
 Create a `.env` file in the server directory:
 
-```
+```env
 MONGODB_URI=your_mongodb_connection_string
 BASE_URL=https://openrouter.ai/api/v1/chat/completions
-MODEL_API_KEY=your_openrouter_api_key
+MODEL_API_KEY=your_default_api_key
+JWT_SECRET=your_secure_jwt_secret
 ```
 
-Start the server:
+Start the backend server:
 
 ```bash
 npm start
 ```
 
-It runs on port 3001.
+The server runs on port 3001.
 
-**3. Set up the client**
+### 2. Set up the Frontend
 
 ```bash
 cd client
@@ -102,47 +69,32 @@ npm install
 npm run dev
 ```
 
-It runs on port 3000. Open http://localhost:3000.
+The client runs on port 3000. Open http://localhost:3000 in your browser.
 
----
+## API Documentation
 
-## API endpoints
+**Authentication**
+* `POST /auth/signup` Create a new account
+* `POST /auth/login` Authenticate and receive JWT
+* `GET  /auth/me` Get current authenticated user details
 
-```
-GET  /reviews              - list all reviews
-GET  /reviews/:id          - get a single review
-POST /reviews              - create a new review (body: { code, language })
+**Reviews**
+* `GET  /reviews` List all reviews for authenticated user
+* `POST /reviews` Submit code for review (Auth required, enforces Trial/Pro quota)
+* `GET  /reviews/:id` Get a specific review (Public for sharing)
 
-GET  /reviews/:id/comments - list comments on a review
-POST /reviews/:id/comments - add a comment (body: { name, comment })
-```
+**Collaboration**
+* `GET  /reviews/:id/comments` List all comments on a review
+* `POST /reviews/:id/comments` Post a comment (Uses authenticated user name or Anonymous)
 
----
+**User Settings (BYOK)**
+* `GET  /settings` Get custom AI configuration
+* `PUT  /settings` Update custom API endpoint, key, and model
+* `POST /settings/fetch-models` Query the custom endpoint for available models
+* `POST /settings/upgrade` Simulate upgrading to Pro tier
 
-## How the AI review works
+## Architecture Details
 
-The backend sends your code to the DeepSeek model through OpenRouter. The prompt instructs it to look for errors first, then optimization opportunities, and format every issue like:
+When code is submitted, the backend validates the user's quota. If the user has a custom API key configured, the request is routed through their chosen endpoint. Otherwise, it defaults to the server's configured provider. The AI is prompted to return structured feedback categorizing issues by severity (critical, warning, suggestion) along with line-specific fixes. 
 
-```
-**Issue [n]**
-- Severity: critical / warning / suggestion
-- Issue: what's wrong
-- Line: where
-- Fix: code example
-```
-
-If nothing is wrong, it just says "No issues found."
-
----
-
-## Real-time comments
-
-When you open a review page, the client joins a Socket.IO room for that review ID. Any comment posted by anyone on that review shows up instantly without a page refresh.
-
----
-
-## Notes
-
-- The frontend uses the Press Start 2P font to keep the pixel aesthetic consistent with NES.css
-- The `ai_prev.js` file in the server is an older version using the Gemini SDK, kept around for reference
-- TLS certificate validation is disabled in the MongoDB connection (`tlsAllowInvalidCertificates: true`) - fine for local dev, change this for production
+Real-time collaboration is handled by Socket.IO rooms. When users view a shared review link, they join a specific room tied to the review ID, broadcasting comments instantly to all connected clients.
