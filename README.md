@@ -1,4 +1,22 @@
 # CodeReview AI
+```
+    _    ___    ____          _      ____            _               
+   / \  |_ _|  / ___|___   __| | ___|  _ \ _____   _(_) _____      __
+  / _ \  | |  | |   / _ \ / _` |/ _ \ |_) / _ \ \ / / |/ _ \ \ /\ / /
+ / ___ \ | |  | |__| (_) | (_| |  __/  _ <  __/\ V /| |  __/\ V  V / 
+/_/   \_\___|  \____\___/ \__,_|\___|_| \_\___| \_/ |_|\___| \_/\_/  
+ ____            _ _____ _                                           
+|  _ \ ___  __ _| |_   _(_)_ __ ___   ___                            
+| |_) / _ \/ _` | | | | | | '_ ` _ \ / _ \                           
+|  _ <  __/ (_| | | | | | | | | | | |  __/                           
+|_| \_\___|\__,_|_| |_| |_|_| |_| |_|\___|                           
+```
+
+
+
+https://github.com/user-attachments/assets/b2b98ea0-4d4b-487c-ab2c-f4cfde639e2a
+
+
 
 A professional Micro SaaS platform that provides automated code reviews using AI. Built with Next.js and Node.js, the platform offers real-time collaboration, user authentication, and a Bring Your Own Key (BYOK) architecture designed for engineering teams.
 
