@@ -1,15 +1,19 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-const reviewCode = async (code, language) => {
-  const response = await fetch(`${process.env.BASE_URL}`, {
+const reviewCode = async (code, language, customConfig = {}) => {
+  const baseUrl = customConfig.endpoint || process.env.BASE_URL;
+  const apiKey = customConfig.apiKey || process.env.MODEL_API_KEY;
+  const model = customConfig.model || "deepseek/deepseek-latest";
+
+  const response = await fetch(baseUrl, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.MODEL_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "deepseek/deepseek-latest",
+      model,
       messages: [
         {
           role: "user",
@@ -41,7 +45,10 @@ const reviewCode = async (code, language) => {
   });
 
   const data = await response.json();
-  // console.log("API Response:", JSON.stringify(data, null, 2));
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || data.message || "API request failed");
+  }
 
   return data.choices[0].message.content;
 };

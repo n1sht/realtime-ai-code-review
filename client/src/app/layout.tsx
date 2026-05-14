@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import "nes.css/css/nes.min.css";
 import "./globals.css";
+import { AuthProvider } from "./AuthContext";
 
 export const metadata: Metadata = {
-  title: "Code Review",
-  description: "AI Code Review Assistant",
+  title: "CodeReview AI | Professional BYOK Code Reviews",
+  description: "Automated AI code reviews for engineering teams. Bring your own API key (BYOK), collaborate in real-time, and ship better code faster without the bloat.",
+  keywords: ["Code Review", "AI", "SaaS", "Developer Tools", "Programming", "BYOK", "OpenAI"],
+  authors: [{ name: "Developer" }],
+  openGraph: {
+    title: "CodeReview AI | Professional BYOK Code Reviews",
+    description: "Automated AI code reviews for engineering teams.",
+    type: "website",
+  }
 };
 
 export default function RootLayout({
@@ -14,13 +21,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

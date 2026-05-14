@@ -1,6 +1,7 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
+import CodeEditor from "../../CodeEditor";
 
 type Props = {
   code: string;
@@ -11,45 +12,26 @@ type Props = {
 export default function ReviewContent({ code, language, codeReview }: Props) {
   return (
     <>
-      <div
-        className="nes-container with-title is-dark"
-        style={{ marginBottom: "1.5rem" }}
-      >
-        <p className="title" style={{ fontSize: "8px" }}>
-          {language.toUpperCase()} CODE
-        </p>
-        <pre
-          style={{
-            fontSize: "10px",
-            fontFamily: "monospace",
-            overflowX: "auto",
-            whiteSpace: "pre-wrap",
-            color: "#92cc41",
-          }}
-        >
-          {code}
-        </pre>
+      <div className="section-gap">
+        <div style={{ marginBottom: "0.5rem" }}>
+          <span className="input-label">Submitted code</span>
+          <span className="badge" style={{ marginLeft: "0.5rem" }}>{language}</span>
+        </div>
+        <CodeEditor
+          value={code}
+          onChange={() => {}}
+          language={language}
+          readOnly
+        />
       </div>
 
-      <div
-        className="nes-container with-title is-dark"
-        style={{ marginBottom: "1.5rem" }}
-      >
-        <p className="title" style={{ fontSize: "8px" }}>
-          AI REVIEW
-        </p>
-        <div style={{ fontSize: "10px", lineHeight: "2", color: "#fff" }}>
-          <div
-            style={{
-              fontSize: "10px",
-              lineHeight: "2",
-              color: "#fff",
-              overflowX: "hidden",
-              wordBreak: "break-word",
-            }}
-          >
-            <ReactMarkdown>{codeReview}</ReactMarkdown>
-          </div>
+      <div className="card section-gap">
+        <div className="card-header">
+          <h2 className="card-title">AI Review</h2>
+          <span className="badge badge-success">Complete</span>
+        </div>
+        <div className="review-prose">
+          <ReactMarkdown>{codeReview}</ReactMarkdown>
         </div>
       </div>
     </>

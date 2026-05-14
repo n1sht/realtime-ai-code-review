@@ -1,4 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useAuth } from "../AuthContext";
+import NavBar from "../NavBar";
+import { useRouter } from "next/navigation";
 
 type Review = {
   _id: string;
@@ -7,83 +14,93 @@ type Review = {
   createdAt: string;
 };
 
-const Reviews = async () => {
-  const response = await fetch("http://localhost:3001/reviews");
-  const reviews: Review[] = await response.json();
+export default function Reviews() {
+  const { user, token, loading: authLoading } = useAuth();
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.push("/");
+      return;
+    }
+
+    axios
+      .get("http://localhost:3001/reviews", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setReviews(res.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
+  }, [authLoading, user, token, router]);
+
+  if (authLoading || loading) {
+    return <div className="loader">Loading...</div>;
+  }
+
+  const uniqueLangs = new Set(reviews.map((r) => r.language)).size;
+  const latest = reviews.length > 0
+    ? new Date(reviews[0].createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : "—";
 
   return (
-    <main style={{ maxWidth: "860px", margin: "0 auto" }}>
-      <div className="nes-container with-title is-dark">
-        <p className="title" style={{ fontSize: "10px" }}>
-          ALL REVIEWS
-        </p>
+    <div className="app-shell">
+      <NavBar />
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "2rem",
-          }}
-        >
-          <p style={{ fontSize: "8px", color: "#92cc41" }}>
-            {reviews.length} REVIEW{reviews.length !== 1 ? "S" : ""} STORED
-          </p>
+      <div className="stat-row">
+        <div className="stat-card">
+          <div className="stat-value">{reviews.length}</div>
+          <div className="stat-label">Total Reviews</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{uniqueLangs}</div>
+          <div className="stat-label">Languages</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{latest}</div>
+          <div className="stat-label">Latest</div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <div>
+            <h1 className="card-title">Your reviews</h1>
+            <p className="card-desc">{reviews.length} review{reviews.length !== 1 ? "s" : ""}</p>
+          </div>
           <Link href="/">
-            <button className="nes-btn is-success" style={{ fontSize: "8px" }}>
-              + NEW REVIEW
-            </button>
+            <button className="btn btn-primary btn-sm">+ New review</button>
           </Link>
         </div>
 
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
-        >
-          {reviews.map((r) => (
-            <Link
-              key={r._id}
-              href={`/reviews/${r._id}`}
-              style={{ textDecoration: "none" }}
-            >
-              <div
-                className="nes-container is-dark"
-                style={{ cursor: "pointer", borderColor: "#444" }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "1rem",
-                  }}
-                >
-                  <span className="nes-badge">
-                    <span className="is-success" style={{ fontSize: "7px" }}>
-                      {r.language.toUpperCase()}
+        {reviews.length === 0 ? (
+          <div className="empty-state">No reviews yet. Submit your first code review.</div>
+        ) : (
+          <div className="stack">
+            {reviews.map((r) => (
+              <Link key={r._id} href={`/reviews/${r._id}`}>
+                <div className="review-card">
+                  <div className="review-card-header">
+                    <span className="badge">{r.language}</span>
+                    <span className="review-date">
+                      {new Date(r.createdAt).toLocaleDateString()}
                     </span>
-                  </span>
-                  <span style={{ fontSize: "7px", color: "#666" }}>
-                    {new Date(r.createdAt).toLocaleDateString()}
-                  </span>
+                  </div>
+                  <div className="review-snippet">
+                    {r.code.slice(0, 120)}
+                  </div>
                 </div>
-                <p
-                  style={{
-                    fontSize: "8px",
-                    color: "#aaa",
-                    fontFamily: "monospace",
-                    margin: 0,
-                    lineHeight: "1.8",
-                  }}
-                >
-                  {r.code.slice(0, 100)}...
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
-    </main>
+    </div>
   );
-};
-
-export default Reviews;
+}
