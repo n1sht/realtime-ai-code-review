@@ -13,6 +13,8 @@
                   \/     \/     \/                                 \/     \/            
 ```
 
+![demo](./assets/Ai-Code-Working.gif)
+
 # code-review-ai
 
 A full-stack app that takes your code, sends it to an AI model, and gives you a structured review back. Built with Next.js on the frontend and Node/Express on the backend, with MongoDB for storage and Socket.IO for real-time comment updates on reviews.
