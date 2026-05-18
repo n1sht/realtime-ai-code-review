@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+*.pdf
+assets/
+coverage
+.env
+.env.local

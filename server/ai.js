@@ -1,10 +1,50 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import logger from "./lib/logger.js";
+
+const SYSTEM_PROMPT = `You are a code review assistant. Analyze the given code and return a JSON response.
+Return ONLY valid JSON with this structure:
+{
+  "summary": "Brief overall assessment",
+  "issues": [
+    {
+      "number": 1,
+      "severity": "critical" | "warning" | "suggestion",
+      "issue": "Description of the problem",
+      "line": "Line number or range",
+      "fix": "How to fix it with code example"
+    }
+  ]
+}
+If the code is perfect, return: {"summary": "No issues found. The code looks good.", "issues": []}
+Do NOT include markdown formatting, code fences, or any text outside the JSON.`;
+
+const sanitizeCode = (code) => {
+  return code.replace(/```/g, "'''").slice(0, 50000);
+};
+
+const parseAIResponse = (content) => {
+  try {
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        raw: content,
+        issues: Array.isArray(parsed.issues) ? parsed.issues : [],
+        summary: parsed.summary || "",
+      };
+    }
+  } catch {
+    logger.warn("Failed to parse AI response as JSON, returning raw");
+  }
+  return { raw: content, issues: [], summary: content.slice(0, 200) };
+};
+
 const reviewCode = async (code, language, customConfig = {}) => {
   const baseUrl = customConfig.endpoint || process.env.BASE_URL;
   const apiKey = customConfig.apiKey || process.env.MODEL_API_KEY;
-  const model = customConfig.model || "deepseek/deepseek-latest";
+  const model = customConfig.model || "deepseek/deepseek-chat";
 
   const response = await fetch(baseUrl, {
     method: "POST",
@@ -15,30 +55,10 @@ const reviewCode = async (code, language, customConfig = {}) => {
     body: JSON.stringify({
       model,
       messages: [
+        { role: "system", content: SYSTEM_PROMPT },
         {
           role: "user",
-          content: `You are a code review assistant and your task is to generate a short code review for a given code snippet.
-    Your task is to:
-      1. Review the code and check if there are any errors
-      2. If there are no errors check if the code can be further optimized or written in a better way.
-      3. If everything looks perfect, just write back "The code looks perfect."
-      This is the code:
-
-      """
-      ${code}
-      """
-
-      in Language: ${language}
-
-      For each issue found, respond in this format always:
-
-      **Issue [number]**
-      - Severity: critical / warning / suggestion
-      - Issue: what's wrong
-      - Line: where in the code
-      - Fix: how to fix it with a code example
-
-      If the code is perfect, respond with "No issues found."`,
+          content: `Review this ${language} code:\n\n${sanitizeCode(code)}`,
         },
       ],
     }),
@@ -50,7 +70,8 @@ const reviewCode = async (code, language, customConfig = {}) => {
     throw new Error(data.error?.message || data.message || "API request failed");
   }
 
-  return data.choices[0].message.content;
+  const content = data.choices[0].message.content;
+  return parseAIResponse(content);
 };
 
 export default reviewCode;

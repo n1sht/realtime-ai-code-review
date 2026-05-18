@@ -4,16 +4,25 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
-import { useAuth } from "../../AuthContext";
+import { useAuth, API } from "../../AuthContext";
 import NavBar from "../../NavBar";
 import ReviewContent from "./ReviewContent";
 import CommentsSection from "./CommentsSection";
+
+type Issue = {
+  number: number;
+  severity: "critical" | "warning" | "suggestion";
+  issue: string;
+  line: string;
+  fix: string;
+};
 
 type ReviewData = {
   _id: string;
   code: string;
   language: string;
   codeReview: string;
+  issues: Issue[];
 };
 
 export default function ReviewPage() {
@@ -32,8 +41,8 @@ export default function ReviewPage() {
     }
 
     axios
-      .get(`http://localhost:3001/reviews/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      .get(`${API}/reviews/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         setReview(res.data);
@@ -78,6 +87,7 @@ export default function ReviewPage() {
         code={review.code}
         language={review.language}
         codeReview={review.codeReview}
+        issues={review.issues}
       />
 
       <CommentsSection reviewId={id} />

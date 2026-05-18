@@ -3,7 +3,7 @@
 import axios from "axios";
 import { io } from "socket.io-client";
 import { useEffect, useState } from "react";
-import { useAuth } from "../../AuthContext";
+import { useAuth, API } from "../../AuthContext";
 
 type Comment = {
   _id: string;
@@ -19,22 +19,16 @@ export default function CommentsSection({ reviewId }: { reviewId: string }) {
   const [comment, setComment] = useState("");
 
   useEffect(() => {
-    const loadComments = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:3001/reviews/${reviewId}/comments`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setComments(response.data);
-      } catch (error) {
-        console.error("Error loading comments", error);
-      }
-    };
-    loadComments();
+    axios
+      .get(`${API}/reviews/${reviewId}/comments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setComments(res.data))
+      .catch(() => {});
   }, [reviewId, token]);
 
   useEffect(() => {
-    const socket = io("http://localhost:3001/");
+    const socket = io(API);
     socket.emit("join-review", reviewId);
     socket.on("new-comment", (data) => {
       setComments((prev) => [...prev, data]);
@@ -48,19 +42,15 @@ export default function CommentsSection({ reviewId }: { reviewId: string }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!comment.trim()) return;
-    
     const commenterName = user ? user.name : "Anonymous";
-    
     try {
       await axios.post(
-        `http://localhost:3001/reviews/${reviewId}/comments`,
+        `${API}/reviews/${reviewId}/comments`,
         { name: commenterName, comment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setComment("");
-    } catch (error) {
-      console.log(error);
-    }
+    } catch {}
   };
 
   return (
@@ -99,7 +89,6 @@ export default function CommentsSection({ reviewId }: { reviewId: string }) {
             style={{ resize: "none" }}
           />
         </div>
-
         <button type="submit" className="btn btn-primary btn-sm">
           Post comment
         </button>

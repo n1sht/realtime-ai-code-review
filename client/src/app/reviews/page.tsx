@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth } from "../AuthContext";
+import { useAuth, API } from "../AuthContext";
 import NavBar from "../NavBar";
 import { useRouter } from "next/navigation";
 
@@ -28,7 +28,7 @@ export default function Reviews() {
     }
 
     axios
-      .get("http://localhost:3001/reviews", {
+      .get(`${API}/reviews`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -47,7 +47,7 @@ export default function Reviews() {
   const uniqueLangs = new Set(reviews.map((r) => r.language)).size;
   const latest = reviews.length > 0
     ? new Date(reviews[0].createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    : "—";
+    : "-";
 
   return (
     <div className="app-shell">

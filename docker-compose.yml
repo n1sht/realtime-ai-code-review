@@ -1,0 +1,38 @@
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: codereview
+
+  server:
+    build:
+      context: .
+      target: server
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/codereview
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+      - BASE_URL=${BASE_URL:-https://openrouter.ai/api/v1/chat/completions}
+      - MODEL_API_KEY=${MODEL_API_KEY}
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+
+  client:
+    build:
+      context: .
+      target: client
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+
+volumes:
+  mongo-data:

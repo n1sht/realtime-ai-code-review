@@ -1,0 +1,47 @@
+Nishant Tripathi
+in/nisht
+Lucknow, Uttar Pradesh, India
+n9169n@gmail.com +91 7678855040
+SUMMARY
+Full-stack engineer focused on building developer tools and real-time systems. Strong on backend architecture: request validation, rate
+limiting, structured API design, and automated testing. Looking for a role where I can ship features end-to-end.
+PROJECT
+CodeReview AI - Full-Stack Micro SaaS
+Next.js 16, React 19, TypeScript, Express 5, MongoDB, Socket.IO, Zod, Vitest, Docker, GitHub Actions • github.com/n1sht/realtime-ai-code
+review • April 2026 - May 2026
+• Built a BYOK (Bring Your Own Key) code review platform where users connect any OpenAI-compatible endpoint, with structured JSON parsing that
+categorizes issues by severity with line-specific fixes
+• Implemented request validation with Zod on all endpoints, two-tier rate limiting (5 reviews/min, 100 req/15min), and input sanitization against
+prompt injection
+• Set up CI/CD pipeline with GitHub Actions running 26 automated tests (Vitest + React Testing Library) and containerized the full stack with multi
+stage Docker builds
+• Designed real-time collaboration using Socket.IO rooms for instant comment broadcasting scoped to individual review sessions
+Pixel Canvas
+Vue 3 (Vite), HTML5 Canvas, Node.js, Express, Socket.IO, Supabase (PostgreSQL), Netlify + Render deployment • github.com/n1sht/pixel
+canvas • July 2025 - September 2025
+• Used a server-authoritative Socket.IO architecture where all canvas state lives on the server and clients only render, removing conflict resolution
+entirely across 50+ concurrent users on a 64x64 grid.
+• Batched canvas writes with a 5-second in-memory flush to Supabase, cutting database writes from thousands per second to single digits; added
+stroke-based undo/redo and live user presence indicators.
+Spreadsheet-collab
+React, Node.js, Express, Socket.IO, CSS (DaisyUI), xlsx library, Docker • github.com/n1sht/spreadsheet-collab • October 2025 - December 2025
+• Built formula dependency resolution across a 2,600-cell grid supporting 9 functions with auto-recalculation, using optimistic updates so edits
+reflect on the client instantly before server confirmation.
+• Added real-time cursor broadcasting, 50-state undo/redo, CSV/Excel export via the xlsx library, and Docker containerization for one-command
+local setup.
+Job Application Tracker
+Next.js 16, React 19, TypeScript, MongoDB (Mongoose 9), BetterAuth, Shadcn/ui, @dnd-kit, Tailwind CSS v4 • github.com/n1sht/job
+application-tracker • January 2026 - February 2026
+• Architected a full-stack job tracker with a drag-and-drop Kanban board (@dnd-kit) supporting 200+ job entries at zero UI lag, backed by MongoDB
+(Mongoose 9) and BetterAuth authentication.
+• Shipped a production-grade SaaS landing page with responsive layout achieving sub-second page load across desktop and mobile.
+EDUCATION
+Bachelor of Technology, Computer Science and Engineering
+Shri Ramswaroop Memorial College of Engineering and Management • Lucknow, Uttar Pradesh • 2026 • 8.26/10
+SKILLS
+Programming Languages: Java, JavaScript, TypeScript, and Python
+UI & Frontend Frameworks: Next.js 16, React 19, Vue 3, Tailwind CSS v4, Redux Toolkit
+Backend & API Development: Node.js, Express 5, REST APIs, WebSockets (Socket.IO), JWT
+Databases: MongoDB (Mongoose), MySQL
+DevOps & Tools: Docker, Git, Render, Vercel, Netlify, Swagger/OpenAPI
+Problem Solving: LeetCode in Java - 72 problems (34E / 35M / 3H) · 73.9% acceptance · Beats 81.9%

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth } from "../AuthContext";
+import { useAuth, API } from "../AuthContext";
 import NavBar from "../NavBar";
 import Alert from "../Alert";
 import { useRouter } from "next/navigation";
@@ -32,7 +32,7 @@ export default function SettingsPage() {
     }
 
     axios
-      .get("http://localhost:3001/settings", {
+      .get(`${API}/settings`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -56,7 +56,7 @@ export default function SettingsPage() {
     setModels([]);
     try {
       const res = await axios.post(
-        "http://localhost:3001/settings/fetch-models",
+        `${API}/settings/fetch-models`,
         { endpoint, apiKey },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -75,7 +75,7 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await axios.post(
-        "http://localhost:3001/settings/upgrade",
+        `${API}/settings/upgrade`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -92,7 +92,7 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await axios.put(
-        "http://localhost:3001/settings",
+        `${API}/settings`,
         { customEndpoint: endpoint, customApiKey: apiKey, customModel: model },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -108,7 +108,7 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await axios.put(
-        "http://localhost:3001/settings",
+        `${API}/settings`,
         { customEndpoint: "", customApiKey: "", customModel: "" },
         { headers: { Authorization: `Bearer ${token}` } },
       );

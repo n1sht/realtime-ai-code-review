@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useAuth } from "./AuthContext";
+import { useAuth, API } from "./AuthContext";
 import NavBar from "./NavBar";
 import Alert from "./Alert";
 import CodeEditor from "./CodeEditor";
@@ -159,7 +159,7 @@ function Dashboard() {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://localhost:3001/reviews",
+        `${API}/reviews`,
         { code, language },
         { headers: { Authorization: `Bearer ${token}` } },
       );
