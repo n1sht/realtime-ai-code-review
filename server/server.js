@@ -15,6 +15,12 @@ import createReviewRoutes from "./routes/reviews.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim());
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -29,12 +35,12 @@ const reviewLimiter = rateLimit({
   message: { error: "Too many review requests. Please wait a minute." },
 });
 
-app.use(cors());
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: "100kb" }));
 app.use(limiter);
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { cors: { origin: allowedOrigins } });
 
 io.on("connection", (socket) => {
   logger.debug("Socket connected", { id: socket.id });

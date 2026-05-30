@@ -7,6 +7,10 @@ import NavBar from "../NavBar";
 import Alert from "../Alert";
 import { useRouter } from "next/navigation";
 
+const DEFAULT_MODEL =
+  process.env.NEXT_PUBLIC_DEFAULT_MODEL ||
+  "nvidia/nemotron-3-super-120b-a12b:free";
+
 type Model = {
   id: string;
   name: string;
@@ -22,7 +26,10 @@ export default function SettingsPage() {
   const [fetchingModels, setFetchingModels] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [alert, setAlert] = useState<{ type: "error" | "success"; message: string } | null>(null);
+  const [alert, setAlert] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -48,7 +55,10 @@ export default function SettingsPage() {
 
   const handleFetchModels = async () => {
     if (!endpoint || !apiKey) {
-      setAlert({ type: "error", message: "Endpoint and API key are required to fetch models." });
+      setAlert({
+        type: "error",
+        message: "Endpoint and API key are required to fetch models.",
+      });
       return;
     }
 
@@ -62,7 +72,10 @@ export default function SettingsPage() {
       );
       setModels(res.data.models);
       if (res.data.models.length === 0) {
-        setAlert({ type: "error", message: "No models found at this endpoint." });
+        setAlert({
+          type: "error",
+          message: "No models found at this endpoint.",
+        });
       }
     } catch (error: any) {
       const msg = error.response?.data?.error || "Failed to fetch models.";
@@ -77,7 +90,7 @@ export default function SettingsPage() {
       await axios.post(
         `${API}/settings/upgrade`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setAlert({ type: "success", message: "Upgraded to Pro! (Simulation)" });
       setTimeout(() => window.location.reload(), 1500);
@@ -116,7 +129,10 @@ export default function SettingsPage() {
       setApiKey("");
       setModel("");
       setModels([]);
-      setAlert({ type: "success", message: "Settings cleared. Using server defaults." });
+      setAlert({
+        type: "success",
+        message: "Settings cleared. Using server defaults.",
+      });
     } catch {
       setAlert({ type: "error", message: "Failed to clear settings." });
     }
@@ -130,18 +146,29 @@ export default function SettingsPage() {
   return (
     <div className="app-shell">
       <NavBar />
-      {alert && <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
+      {alert && (
+        <Alert
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
 
       <div className="card section-gap">
         <div className="card-header">
           <div>
             <h1 className="card-title">AI Configuration</h1>
-            <p className="card-desc">Use your own OpenAI-compatible endpoint, or leave empty for defaults</p>
+            <p className="card-desc">
+              Use your own OpenAI-compatible endpoint, or leave empty to use the
+              default model
+            </p>
           </div>
         </div>
 
         <div className="input-group">
-          <label className="input-label" htmlFor="settings-endpoint">API Endpoint</label>
+          <label className="input-label" htmlFor="settings-endpoint">
+            API Endpoint
+          </label>
           <input
             id="settings-endpoint"
             type="text"
@@ -153,7 +180,9 @@ export default function SettingsPage() {
         </div>
 
         <div className="input-group">
-          <label className="input-label" htmlFor="settings-apikey">API Key</label>
+          <label className="input-label" htmlFor="settings-apikey">
+            API Key
+          </label>
           <input
             id="settings-apikey"
             type="password"
@@ -165,7 +194,9 @@ export default function SettingsPage() {
         </div>
 
         <div className="input-group">
-          <label className="input-label" htmlFor="settings-model">Model</label>
+          <label className="input-label" htmlFor="settings-model">
+            Model
+          </label>
           <div className="row">
             <input
               id="settings-model"
@@ -188,9 +219,28 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {!model.trim() && (
+          <div
+            className="settings-hint"
+            style={{
+              borderLeft: "3px solid var(--accent)",
+              marginBottom: "1rem",
+            }}
+          >
+            <p className="settings-hint-title">Using default model</p>
+            <p className="settings-hint-text">
+              Reviews are running on <strong>{DEFAULT_MODEL}</strong> — the
+              server&apos;s default model (free via OpenRouter). Enter your own
+              model above to override it.
+            </p>
+          </div>
+        )}
+
         {models.length > 0 && (
           <div className="input-group">
-            <label className="input-label">Available models ({models.length})</label>
+            <label className="input-label">
+              Available models ({models.length})
+            </label>
             <div className="model-list">
               {models.map((m) => (
                 <button
@@ -223,9 +273,20 @@ export default function SettingsPage() {
         </div>
 
         {!user?.isPro && (
-          <div className="card" style={{ marginTop: "1.5rem", borderStyle: "dashed" }}>
-            <h3 style={{ fontSize: "0.85rem", marginBottom: "0.5rem" }}>Upgrade to Pro</h3>
-            <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>
+          <div
+            className="card"
+            style={{ marginTop: "1.5rem", borderStyle: "dashed" }}
+          >
+            <h3 style={{ fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+              Upgrade to Pro
+            </h3>
+            <p
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--text-secondary)",
+                marginBottom: "1rem",
+              }}
+            >
               Get unlimited code reviews using our default AI models.
             </p>
             <button
@@ -242,9 +303,10 @@ export default function SettingsPage() {
       <div className="settings-hint">
         <p className="settings-hint-title">How it works</p>
         <p className="settings-hint-text">
-          Your endpoint must be OpenAI-compatible (accepts /v1/chat/completions).
-          The &quot;Fetch models&quot; button queries /v1/models on your endpoint.
-          If left empty, the server&apos;s default provider is used.
+          Your endpoint must be OpenAI-compatible (accepts
+          /v1/chat/completions). The &quot;Fetch models&quot; button queries
+          /v1/models on your endpoint. If left empty, the server&apos;s default
+          provider is used — currently the {DEFAULT_MODEL} model.
         </p>
       </div>
     </div>

@@ -8,14 +8,39 @@ import NavBar from "./NavBar";
 import Alert from "./Alert";
 import CodeEditor from "./CodeEditor";
 
-function AuthPage({ defaultMode, onBack }: { defaultMode: "login" | "signup", onBack: () => void }) {
+const SAMPLE_CODE = `function getUser(users, id) {
+  for (var i = 0; i <= users.length; i++) {
+    if (users[i].id == id) {
+      return users[i];
+    }
+  }
+}
+
+async function login(db, email, password) {
+  const query = "SELECT * FROM users WHERE email = '" + email + "'";
+  const user = db.execute(query);
+  if (user.password == password) {
+    return { ok: true, token: Math.random().toString(36) };
+  }
+}`;
+
+function AuthPage({
+  defaultMode,
+  onBack,
+}: {
+  defaultMode: "login" | "signup";
+  onBack: () => void;
+}) {
   const { login, signup } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">(defaultMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState<{ type: "error" | "success"; message: string } | null>(null);
+  const [alert, setAlert] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
 
   const router = useRouter();
 
@@ -50,7 +75,17 @@ function AuthPage({ defaultMode, onBack }: { defaultMode: "login" | "signup", on
     <div className="auth-shell" style={{ position: "relative" }}>
       <div style={{ position: "absolute", top: "1.5rem", left: "1.5rem" }}>
         <button className="btn btn-ghost btn-sm" onClick={onBack}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ marginRight: "4px" }}
+          >
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
@@ -58,18 +93,40 @@ function AuthPage({ defaultMode, onBack }: { defaultMode: "login" | "signup", on
         </button>
       </div>
 
-      {alert && <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
+      {alert && (
+        <Alert
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--accent)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                display: "inline",
+                verticalAlign: "middle",
+                marginRight: "6px",
+              }}
+            >
               <polyline points="16 18 22 12 16 6" />
               <polyline points="8 6 2 12 8 18" />
             </svg>
             CodeReview AI
           </div>
           <p className="auth-subtitle">
-            {mode === "login" ? "Sign in to your account" : "Create a new account"}
+            {mode === "login"
+              ? "Sign in to your account"
+              : "Create a new account"}
           </p>
         </div>
 
@@ -77,7 +134,9 @@ function AuthPage({ defaultMode, onBack }: { defaultMode: "login" | "signup", on
           <form onSubmit={handleSubmit}>
             {mode === "signup" && (
               <div className="input-group">
-                <label className="input-label" htmlFor="auth-name">Name</label>
+                <label className="input-label" htmlFor="auth-name">
+                  Name
+                </label>
                 <input
                   id="auth-name"
                   type="text"
@@ -90,7 +149,9 @@ function AuthPage({ defaultMode, onBack }: { defaultMode: "login" | "signup", on
             )}
 
             <div className="input-group">
-              <label className="input-label" htmlFor="auth-email">Email</label>
+              <label className="input-label" htmlFor="auth-email">
+                Email
+              </label>
               <input
                 id="auth-email"
                 type="email"
@@ -102,7 +163,9 @@ function AuthPage({ defaultMode, onBack }: { defaultMode: "login" | "signup", on
             </div>
 
             <div className="input-group">
-              <label className="input-label" htmlFor="auth-password">Password</label>
+              <label className="input-label" htmlFor="auth-password">
+                Password
+              </label>
               <input
                 id="auth-password"
                 type="password"
@@ -119,7 +182,11 @@ function AuthPage({ defaultMode, onBack }: { defaultMode: "login" | "signup", on
               disabled={loading}
               style={{ width: "100%", justifyContent: "center" }}
             >
-              {loading ? "Loading..." : mode === "login" ? "Sign in" : "Create account"}
+              {loading
+                ? "Loading..."
+                : mode === "login"
+                  ? "Sign in"
+                  : "Create account"}
             </button>
           </form>
 
@@ -144,10 +211,13 @@ function AuthPage({ defaultMode, onBack }: { defaultMode: "login" | "signup", on
 
 function Dashboard() {
   const { token } = useAuth();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(SAMPLE_CODE);
   const [language, setLanguage] = useState("javascript");
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState<{ type: "error" | "success"; message: string } | null>(null);
+  const [alert, setAlert] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -165,7 +235,8 @@ function Dashboard() {
       );
       router.push(`/reviews/${response.data._id}`);
     } catch (error: any) {
-      const msg = error.response?.data?.error || "Review failed. Check your AI settings.";
+      const msg =
+        error.response?.data?.error || "Review failed. Check your AI settings.";
       setAlert({ type: "error", message: msg });
       setLoading(false);
     }
@@ -174,21 +245,33 @@ function Dashboard() {
   return (
     <div className="app-shell">
       <NavBar />
-      {alert && <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
+      {alert && (
+        <Alert
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="card section-gap">
           <div className="card-header">
             <div>
               <h1 className="card-title">New code review</h1>
-              <p className="card-desc">Paste your code and get an AI-powered review</p>
+              <p className="card-desc">
+                Sample code is loaded below — hit Submit to see a review in
+                action, or paste your own.
+              </p>
             </div>
           </div>
 
           <div className="input-group">
             <label className="input-label">Language</label>
             <div className="select-wrap">
-              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+              >
                 <option value="javascript">JavaScript</option>
                 <option value="typescript">TypeScript</option>
                 <option value="python">Python</option>
@@ -211,11 +294,7 @@ function Dashboard() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-          >
+          <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? "Analyzing..." : "Submit for review"}
           </button>
         </div>
@@ -253,63 +332,176 @@ export default function Home() {
     <main className="app-shell" style={{ maxWidth: "1000px" }}>
       <nav className="nav" style={{ borderBottom: "none", paddingBottom: 0 }}>
         <div className="nav-brand">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <polyline points="16 18 22 12 16 6" />
             <polyline points="8 6 2 12 8 18" />
           </svg>
           CodeReview AI
         </div>
         <div className="nav-actions">
-          <button className="btn btn-ghost" onClick={() => setShowAuth("login")}>Log in</button>
-          <button className="btn btn-primary" onClick={() => setShowAuth("signup")}>Sign up</button>
+          <button
+            className="btn btn-ghost"
+            onClick={() => setShowAuth("login")}
+          >
+            Log in
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowAuth("signup")}
+          >
+            Sign up
+          </button>
         </div>
       </nav>
 
       <header style={{ padding: "8rem 0 6rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "3.5rem", fontWeight: 800, letterSpacing: "-0.04em", marginBottom: "1.5rem", lineHeight: 1.1 }}>
-          Ship better code, <br/>
-          <span style={{ color: "var(--text-secondary)" }}>faster than ever.</span>
+        <h1
+          style={{
+            fontSize: "3.5rem",
+            fontWeight: 800,
+            letterSpacing: "-0.04em",
+            marginBottom: "1.5rem",
+            lineHeight: 1.1,
+          }}
+        >
+          Ship better code, <br />
+          <span style={{ color: "var(--text-secondary)" }}>
+            faster than ever.
+          </span>
         </h1>
-        <p style={{ fontSize: "1.1rem", color: "var(--text-muted)", maxWidth: "600px", margin: "0 auto 2.5rem", lineHeight: 1.6 }}>
-          Automated code reviews powered by the latest AI models. Bring your own API key to save costs, or use our managed pro tier.
+        <p
+          style={{
+            fontSize: "1.1rem",
+            color: "var(--text-muted)",
+            maxWidth: "600px",
+            margin: "0 auto 2.5rem",
+            lineHeight: 1.6,
+          }}
+        >
+          Automated code reviews powered by the latest AI models. Bring your own
+          API key to save costs, or use our managed pro tier.
         </p>
         <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
-          <button className="btn btn-primary" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => setShowAuth("signup")}>
+          <button
+            className="btn btn-primary"
+            style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }}
+            onClick={() => setShowAuth("signup")}
+          >
             Start your 5-day trial
           </button>
-          <a href="#features" className="btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }}>
-            Explore features
+          <a
+            href="https://github.com/n1sht/realtime-ai-code-review"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn"
+            style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }}
+          >
+            View on GitHub
           </a>
         </div>
       </header>
 
-      <section id="features" style={{ padding: "4rem 0", borderTop: "1px solid var(--border)" }}>
-        <h2 style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: "2.5rem", textAlign: "center" }}>
+      <section
+        id="features"
+        style={{ padding: "4rem 0", borderTop: "1px solid var(--border)" }}
+      >
+        <h2
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            marginBottom: "2.5rem",
+            textAlign: "center",
+          }}
+        >
           Built for professional engineering teams.
         </h2>
         <div className="stat-row">
           <div className="card" style={{ textAlign: "left" }}>
-            <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.5rem" }}>Bring Your Own Key</h3>
-            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-              Connect your own OpenAI-compatible endpoint. Perfect for local models or using your own API credits to save costs.
+            <h3
+              style={{
+                fontSize: "1rem",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Bring Your Own Key
+            </h3>
+            <p
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--text-secondary)",
+                lineHeight: 1.6,
+              }}
+            >
+              Connect your own OpenAI-compatible endpoint. Perfect for local
+              models or using your own API credits to save costs.
             </p>
           </div>
           <div className="card" style={{ textAlign: "left" }}>
-            <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.5rem" }}>Real-time Collaboration</h3>
-            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-              Share review links directly with your team. Discuss AI feedback and leave comments in real-time synced via WebSockets.
+            <h3
+              style={{
+                fontSize: "1rem",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Real-time Collaboration
+            </h3>
+            <p
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--text-secondary)",
+                lineHeight: 1.6,
+              }}
+            >
+              Share review links directly with your team. Discuss AI feedback
+              and leave comments in real-time synced via WebSockets.
             </p>
           </div>
           <div className="card" style={{ textAlign: "left" }}>
-            <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.5rem" }}>Developer First</h3>
-            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-              No bloat, no generic AI slop. A professional, IDE-style interface designed strictly for fast, efficient workflows.
+            <h3
+              style={{
+                fontSize: "1rem",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Developer First
+            </h3>
+            <p
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--text-secondary)",
+                lineHeight: 1.6,
+              }}
+            >
+              No bloat, no generic AI slop. A professional, IDE-style interface
+              designed strictly for fast, efficient workflows.
             </p>
           </div>
         </div>
       </section>
 
-      <footer style={{ padding: "2rem 0", textAlign: "center", borderTop: "1px solid var(--border)", color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "4rem" }}>
+      <footer
+        style={{
+          padding: "2rem 0",
+          textAlign: "center",
+          borderTop: "1px solid var(--border)",
+          color: "var(--text-muted)",
+          fontSize: "0.8rem",
+          marginTop: "4rem",
+        }}
+      >
         &copy; {new Date().getFullYear()} CodeReview AI. All rights reserved.
       </footer>
     </main>

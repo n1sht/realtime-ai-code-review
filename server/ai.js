@@ -44,7 +44,16 @@ const parseAIResponse = (content) => {
 const reviewCode = async (code, language, customConfig = {}) => {
   const baseUrl = customConfig.endpoint || process.env.BASE_URL;
   const apiKey = customConfig.apiKey || process.env.MODEL_API_KEY;
-  const model = customConfig.model || "deepseek/deepseek-chat";
+  const model =
+    customConfig.model || process.env.DEFAULT_MODEL || "deepseek/deepseek-chat";
+
+  if (!baseUrl || !apiKey) {
+    const err = new Error(
+      "No AI provider configured. Add your own endpoint and API key in Settings, or contact the site owner.",
+    );
+    err.status = 503;
+    throw err;
+  }
 
   const response = await fetch(baseUrl, {
     method: "POST",
@@ -67,7 +76,9 @@ const reviewCode = async (code, language, customConfig = {}) => {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error?.message || data.message || "API request failed");
+    throw new Error(
+      data.error?.message || data.message || "API request failed",
+    );
   }
 
   const content = data.choices[0].message.content;
