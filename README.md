@@ -4,6 +4,10 @@ A full-stack Micro SaaS platform for automated code reviews powered by AI. Users
 
 Built with Next.js 16, Express 5, MongoDB, and Socket.IO. Supports Bring Your Own Key (BYOK) so teams can use their own OpenAI-compatible endpoints.
 
+<p align="center">
+  <img src="assets/demo.gif" width="700" alt="Demo GIF">
+</p>
+
 ## What it does
 
 You paste code. The AI analyzes it and returns structured issues categorized as critical, warning, or suggestion, each with the exact line and a fix. Your team can view shared review links and discuss feedback through live comments powered by WebSockets.
