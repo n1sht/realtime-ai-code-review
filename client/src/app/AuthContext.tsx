@@ -9,6 +9,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import axios from "axios";
+import { API } from "./apiClient";
 
 type User = {
   _id: string;
@@ -34,7 +35,6 @@ type AuthResponse = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const TOKEN_STORAGE_KEY = "cr-token";
 const TOKEN_CHANGE_EVENT = "cr-token-change";
 

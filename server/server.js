@@ -17,9 +17,35 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:3000")
+const allowedOrigins = (
+  process.env.CLIENT_ORIGIN ||
+  "http://localhost:3000,https://realtime-ai-code-review.vercel.app"
+)
   .split(",")
-  .map((origin) => origin.trim());
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+
+  return allowedOrigins.some((allowedOrigin) => {
+    if (allowedOrigin === origin) return true;
+    if (!allowedOrigin.includes("*")) return false;
+
+    const pattern = new RegExp(
+      `^${allowedOrigin.split("*").map(escapeRegex).join(".*")}$`,
+    );
+    return pattern.test(origin);
+  });
+};
+
+const corsOptions = {
+  origin(origin, callback) {
+    callback(null, isAllowedOrigin(origin));
+  },
+};
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -35,12 +61,12 @@ const reviewLimiter = rateLimit({
   message: { error: "Too many review requests. Please wait a minute." },
 });
 
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "100kb" }));
 app.use(limiter);
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: allowedOrigins } });
+const io = new Server(server, { cors: corsOptions });
 
 io.on("connection", (socket) => {
   logger.debug("Socket connected", { id: socket.id });

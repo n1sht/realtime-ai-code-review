@@ -3,7 +3,8 @@
 import React, { Suspense, useState } from "react";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth, API } from "./AuthContext";
+import { useAuth } from "./AuthContext";
+import { API, getApiErrorMessage } from "./apiClient";
 import NavBar from "./NavBar";
 import Alert from "./Alert";
 import CodeEditor from "./CodeEditor";
@@ -25,17 +26,6 @@ async function login(db, email, password) {
 }`;
 
 type AuthMode = "login" | "signup";
-type ApiErrorResponse = {
-  error?: string;
-};
-
-function getApiErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError<ApiErrorResponse>(error)) {
-    return error.response?.data?.error || fallback;
-  }
-
-  return fallback;
-}
 
 function AuthPage({
   defaultMode,

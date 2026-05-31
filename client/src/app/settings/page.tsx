@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth, API } from "../AuthContext";
+import { useAuth } from "../AuthContext";
+import { API, getApiErrorMessage } from "../apiClient";
 import NavBar from "../NavBar";
 import Alert from "../Alert";
 import { useRouter } from "next/navigation";
@@ -15,18 +16,6 @@ type Model = {
   id: string;
   name: string;
 };
-
-type ApiErrorResponse = {
-  error?: string;
-};
-
-function getApiErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError<ApiErrorResponse>(error)) {
-    return error.response?.data?.error || fallback;
-  }
-
-  return fallback;
-}
 
 export default function SettingsPage() {
   const { user, token, loading: authLoading } = useAuth();

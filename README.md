@@ -78,6 +78,27 @@ npm run dev
 
 The client runs on port 3000.
 
+### Deployment environment variables
+
+On Render, configure the backend service with:
+
+```bash
+MONGODB_URI=mongodb+srv://...
+JWT_SECRET=your_secure_random_string
+CLIENT_ORIGIN=https://realtime-ai-code-review.vercel.app
+BASE_URL=https://openrouter.ai/api/v1/chat/completions
+MODEL_API_KEY=your_provider_key
+DEFAULT_MODEL=deepseek/deepseek-chat
+```
+
+On Vercel, configure the frontend project with:
+
+```bash
+NEXT_PUBLIC_API_URL=https://your-render-service.onrender.com
+```
+
+After changing `NEXT_PUBLIC_API_URL`, redeploy the Vercel app so the new public environment variable is included in the client bundle.
+
 ### Docker (full stack)
 
 ```bash
