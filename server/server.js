@@ -23,6 +23,7 @@ const corsOptions = createCorsOptions();
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  skip: (req) => req.path === "/health" || req.method === "OPTIONS",
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." },
@@ -31,10 +32,12 @@ const limiter = rateLimit({
 const reviewLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
+  skip: (req) => req.method === "OPTIONS",
   message: { error: "Too many review requests. Please wait a minute." },
 });
 
 app.use(cors(corsOptions));
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.use(express.json({ limit: "100kb" }));
 app.use(limiter);
 
@@ -60,8 +63,6 @@ io.on("connection", (socket) => {
 app.use("/auth", authRoutes);
 app.use("/settings", settingsRoutes);
 app.use("/reviews", reviewLimiter, createReviewRoutes(io));
-
-app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 app.use(errorHandler);
 
