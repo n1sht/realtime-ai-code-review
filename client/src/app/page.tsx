@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useState } from "react";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth, API } from "./AuthContext";
 import NavBar from "./NavBar";
 import Alert from "./Alert";
@@ -24,6 +24,19 @@ async function login(db, email, password) {
   }
 }`;
 
+type AuthMode = "login" | "signup";
+type ApiErrorResponse = {
+  error?: string;
+};
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    return error.response?.data?.error || fallback;
+  }
+
+  return fallback;
+}
+
 function AuthPage({
   defaultMode,
   onBack,
@@ -32,7 +45,7 @@ function AuthPage({
   onBack: () => void;
 }) {
   const { login, signup } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">(defaultMode);
+  const [mode, setMode] = useState<AuthMode>(defaultMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -64,8 +77,8 @@ function AuthPage({
       if (redirectUrl) {
         router.push(redirectUrl);
       }
-    } catch (error: any) {
-      const msg = error.response?.data?.error || "Something went wrong.";
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(error, "Something went wrong.");
       setAlert({ type: "error", message: msg });
       setLoading(false);
     }
@@ -234,9 +247,11 @@ function Dashboard() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       router.push(`/reviews/${response.data._id}`);
-    } catch (error: any) {
-      const msg =
-        error.response?.data?.error || "Review failed. Check your AI settings.";
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(
+        error,
+        "Review failed. Check your AI settings.",
+      );
       setAlert({ type: "error", message: msg });
       setLoading(false);
     }
@@ -303,18 +318,19 @@ function Dashboard() {
   );
 }
 
-export default function Home() {
+function HomeContent() {
   const { user, loading } = useAuth();
-  const [showAuth, setShowAuth] = useState<"login" | "signup" | null>(null);
+  const searchParams = useSearchParams();
+  const [selectedAuth, setSelectedAuth] = useState<AuthMode | null>(null);
+  const [dismissedRedirectAuth, setDismissedRedirectAuth] = useState(false);
+  const redirectAuth =
+    searchParams.get("redirect") && !dismissedRedirectAuth ? "login" : null;
+  const showAuth = selectedAuth ?? redirectAuth;
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("redirect")) {
-        setShowAuth("login");
-      }
-    }
-  }, []);
+  const handleAuthBack = () => {
+    setSelectedAuth(null);
+    setDismissedRedirectAuth(true);
+  };
 
   if (loading) {
     return <div className="loader">Loading...</div>;
@@ -325,7 +341,7 @@ export default function Home() {
   }
 
   if (showAuth) {
-    return <AuthPage defaultMode={showAuth} onBack={() => setShowAuth(null)} />;
+    return <AuthPage defaultMode={showAuth} onBack={handleAuthBack} />;
   }
 
   return (
@@ -350,13 +366,13 @@ export default function Home() {
         <div className="nav-actions">
           <button
             className="btn btn-ghost"
-            onClick={() => setShowAuth("login")}
+            onClick={() => setSelectedAuth("login")}
           >
             Log in
           </button>
           <button
             className="btn btn-primary"
-            onClick={() => setShowAuth("signup")}
+            onClick={() => setSelectedAuth("signup")}
           >
             Sign up
           </button>
@@ -394,7 +410,7 @@ export default function Home() {
           <button
             className="btn btn-primary"
             style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }}
-            onClick={() => setShowAuth("signup")}
+            onClick={() => setSelectedAuth("signup")}
           >
             Start your 5-day trial
           </button>
@@ -505,5 +521,13 @@ export default function Home() {
         &copy; {new Date().getFullYear()} CodeReview AI. All rights reserved.
       </footer>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="loader">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

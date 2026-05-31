@@ -16,6 +16,18 @@ type Model = {
   name: string;
 };
 
+type ApiErrorResponse = {
+  error?: string;
+};
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    return error.response?.data?.error || fallback;
+  }
+
+  return fallback;
+}
+
 export default function SettingsPage() {
   const { user, token, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -77,8 +89,8 @@ export default function SettingsPage() {
           message: "No models found at this endpoint.",
         });
       }
-    } catch (error: any) {
-      const msg = error.response?.data?.error || "Failed to fetch models.";
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(error, "Failed to fetch models.");
       setAlert({ type: "error", message: msg });
     }
     setFetchingModels(false);
@@ -94,8 +106,8 @@ export default function SettingsPage() {
       );
       setAlert({ type: "success", message: "Upgraded to Pro! (Simulation)" });
       setTimeout(() => window.location.reload(), 1500);
-    } catch (error: any) {
-      const msg = error.response?.data?.error || "Failed to upgrade.";
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(error, "Failed to upgrade.");
       setAlert({ type: "error", message: msg });
       setSaving(false);
     }
@@ -110,8 +122,8 @@ export default function SettingsPage() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       setAlert({ type: "success", message: "Settings saved." });
-    } catch (error: any) {
-      const msg = error.response?.data?.error || "Failed to save settings.";
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(error, "Failed to save settings.");
       setAlert({ type: "error", message: msg });
     }
     setSaving(false);

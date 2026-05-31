@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
 import axios from "axios";
 
 type User = {
@@ -20,55 +27,110 @@ type AuthContextType = {
   logout: () => void;
 };
 
+type AuthResponse = {
+  token: string;
+  user: User;
+};
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const TOKEN_STORAGE_KEY = "cr-token";
+const TOKEN_CHANGE_EVENT = "cr-token-change";
+
+function readStoredToken() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return localStorage.getItem(TOKEN_STORAGE_KEY);
+}
+
+function readServerToken() {
+  return null;
+}
+
+function subscribeToTokenChanges(onStoreChange: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(TOKEN_CHANGE_EVENT, onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(TOKEN_CHANGE_EVENT, onStoreChange);
+  };
+}
+
+function writeStoredToken(token: string | null) {
+  if (token) {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+
+  window.dispatchEvent(new Event(TOKEN_CHANGE_EVENT));
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const token = useSyncExternalStore(
+    subscribeToTokenChanges,
+    readStoredToken,
+    readServerToken,
+  );
+  const loading = Boolean(token && !user);
 
   useEffect(() => {
-    const saved = localStorage.getItem("cr-token");
-    if (saved) {
-      setToken(saved);
-      axios
-        .get(`${API}/auth/me`, {
-          headers: { Authorization: `Bearer ${saved}` },
-        })
-        .then((res) => {
-          setUser(res.data);
-          setLoading(false);
-        })
-        .catch(() => {
-          localStorage.removeItem("cr-token");
-          setToken(null);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
+    if (!token || user) {
+      return;
     }
-  }, []);
+
+    let isCurrent = true;
+
+    axios
+      .get<User>(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        if (!isCurrent) return;
+        setUser(res.data);
+      })
+      .catch(() => {
+        if (!isCurrent) return;
+        writeStoredToken(null);
+        setUser(null);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [token, user]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await axios.post(`${API}/auth/login`, { email, password });
-    localStorage.setItem("cr-token", res.data.token);
-    setToken(res.data.token);
+    const res = await axios.post<AuthResponse>(`${API}/auth/login`, {
+      email,
+      password,
+    });
     setUser(res.data.user);
+    writeStoredToken(res.data.token);
   }, []);
 
   const signup = useCallback(async (email: string, password: string, name: string) => {
-    const res = await axios.post(`${API}/auth/signup`, { email, password, name });
-    localStorage.setItem("cr-token", res.data.token);
-    setToken(res.data.token);
+    const res = await axios.post<AuthResponse>(`${API}/auth/signup`, {
+      email,
+      password,
+      name,
+    });
     setUser(res.data.user);
+    writeStoredToken(res.data.token);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("cr-token");
-    setToken(null);
     setUser(null);
+    writeStoredToken(null);
   }, []);
 
   return (
