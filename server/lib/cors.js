@@ -1,5 +1,5 @@
 const DEFAULT_CLIENT_ORIGINS =
-  "http://localhost:3000,https://realtime-ai-code-review.vercel.app";
+  "http://localhost:3000,https://realtime-ai-code-review.vercel.app,https://*.vercel.app";
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -7,11 +7,19 @@ export const normalizeOrigin = (origin) => origin.trim().replace(/\/+$/, "");
 
 export const parseAllowedOrigins = (
   origins = process.env.CLIENT_ORIGIN || DEFAULT_CLIENT_ORIGINS,
-) =>
-  origins
+) => {
+  const configuredOrigins = origins
     .split(",")
     .map(normalizeOrigin)
     .filter(Boolean);
+
+  return Array.from(
+    new Set([
+      ...configuredOrigins,
+      ...DEFAULT_CLIENT_ORIGINS.split(",").map(normalizeOrigin),
+    ]),
+  );
+};
 
 export const isAllowedOrigin = (origin, allowedOrigins = parseAllowedOrigins()) => {
   if (!origin) return true;

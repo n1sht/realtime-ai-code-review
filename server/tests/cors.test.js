@@ -33,6 +33,19 @@ describe("CORS origin helpers", () => {
     );
   });
 
+  it("allows Vercel preview deployments even when CLIENT_ORIGIN only names production", () => {
+    const allowedOrigins = parseAllowedOrigins(
+      "https://realtime-ai-code-review.vercel.app",
+    );
+
+    expect(
+      isAllowedOrigin(
+        "https://realtime-ai-code-review-git-main-n1sht.vercel.app",
+        allowedOrigins,
+      ),
+    ).toBe(true);
+  });
+
   it("rejects unrelated origins", () => {
     const allowedOrigins = parseAllowedOrigins(
       "https://realtime-ai-code-review.vercel.app",
