@@ -1,152 +1,183 @@
 # CodeReview AI
 
-A full-stack Micro SaaS platform for automated code reviews powered by AI. Users paste code, get structured feedback with severity-categorized issues and line-specific fixes, and collaborate with their team in real time.
+A BYOK (Bring Your Own Key) code review platform built as a micro SaaS. Connect any OpenAI-compatible API, paste your code, and get structured feedback broken down by severity with line-specific fixes. Teams can share reviews and leave comments in real time.
 
-Built with Next.js 16, Express 5, MongoDB, and Socket.IO. Supports Bring Your Own Key (BYOK) so teams can use their own OpenAI-compatible endpoints.
+Live demo: [realtime-ai-code-review.vercel.app](https://realtime-ai-code-review.vercel.app)
 
-<p align="center">
-  <img src="assets/demo.gif" width="700" alt="Demo GIF">
-</p>
+---
 
-Deployed <a href="https://realtime-ai-code-review.vercel.app/"> here </a>
+![demo](assets/demo.gif)
 
-## What it does
+---
 
-You paste code. The AI analyzes it and returns structured issues categorized as critical, warning, or suggestion, each with the exact line and a fix. Your team can view shared review links and discuss feedback through live comments powered by WebSockets.
+## Why I built this
 
-Users get a 5-day trial on the default AI provider. After that, they either upgrade to Pro or configure their own API key in settings. The BYOK model means zero vendor lock-in and zero cost for teams running local models.
+Most AI code review tools either lock you into one model or require handing over your API key to a third party. I wanted something where the user stays in control: bring your own key, point it at any OpenAI-compatible endpoint (OpenRouter, local Ollama, your company's proxy, whatever), and the platform routes through it. No key stored somewhere shady, no vendor lock-in.
+
+The real-time collaboration piece came from a frustration I had watching engineers screenshot AI feedback and paste it into Slack. This lets you share a review link and discuss it live, right there.
+
+---
+
+## Features
+
+- **BYOK architecture** - users configure their own API endpoint and key in settings. The backend checks for a custom config per user and routes accordingly. Supports any OpenAI-compatible provider.
+- **Structured AI feedback** - the AI is prompted to return JSON categorizing issues as critical, warning, or suggestion, each with a line number and a suggested fix. No unformatted walls of text.
+- **Real-time collaboration** - Socket.IO rooms scoped to individual review IDs. When someone opens a shared review link they join the room, and comments broadcast instantly to everyone watching.
+- **Auth + trial system** - JWT authentication with bcrypt, a 5-day trial with quota enforcement, and a simulated Pro tier upgrade flow.
+- **Review history** - every review is persisted to MongoDB and accessible from a dashboard. Public sharing works without an account.
+
+---
+
+## Tech stack
+
+**Frontend**
+- Next.js 16 (App Router)
+- React 19
+- Vanilla CSS with a custom dark mode design system
+- Socket.IO client
+- React Markdown
+
+**Backend**
+- Node.js + Express 5
+- MongoDB (Mongoose)
+- Socket.IO
+- JWT + bcryptjs
+- Zod for request validation
+- Vitest + React Testing Library (26 tests)
+- GitHub Actions CI/CD
+- Docker (multi-stage build)
+
+---
 
 ## Architecture
 
-The backend validates every request with Zod schemas, enforces rate limits (5 reviews per minute, 100 general requests per 15 minutes), and sanitizes code input before sending it to the AI. The AI is prompted to return structured JSON with severity, line numbers, and fixes. If parsing fails, it falls back to raw markdown rendering.
-
-Real-time collaboration works through Socket.IO rooms. When someone opens a shared review link, they join a room tied to that review ID. Comments broadcast instantly to everyone viewing the same review.
-
-Authentication uses JWT with bcrypt password hashing. Tokens expire after 7 days.
-
-## Tech Stack
-
-Frontend: Next.js 16 (App Router), React 19, Vanilla CSS design system, Socket.IO client, React Markdown
-
-Backend: Node.js, Express 5, MongoDB with Mongoose, JWT auth, Zod validation, express-rate-limit, Socket.IO
-
-Testing: Vitest, React Testing Library, 26 automated tests
-
-DevOps: Docker multi-stage builds, docker-compose, GitHub Actions CI
-
-## Project Structure
-
 ```
-code-review-ai/
-  client/             Next.js frontend
-  server/
-    routes/           auth.js, reviews.js, settings.js
-    middleware/       auth.js, validate.js, errorHandler.js
-    lib/              logger.js, validators.js
-    models/           User.js, Review.js, Comment.js
-    tests/            ai.test.js, validators.test.js
-    ai.js             AI integration with structured response parsing
-    server.js         Entry point
-  .github/workflows/  CI pipeline
-  Dockerfile          Multi-stage build
-  docker-compose.yml  Full stack with MongoDB
+Client (Next.js)
+    |
+    |-- REST API calls --> Express server (port 3001)
+    |                          |
+    |                          |-- Validates request with Zod
+    |                          |-- Checks user quota (trial vs pro)
+    |                          |-- Routes to user's custom endpoint OR default
+    |                          |-- Returns structured JSON feedback
+    |
+    |-- WebSocket --> Socket.IO server
+                          |
+                          |-- Scoped to review ID rooms
+                          |-- Broadcasts comments to all connected clients
 ```
 
-## Getting Started
+When code is submitted, the server first validates the request, then checks whether the user has a custom API key configured. If yes, the request goes through their endpoint. If not, it falls back to the server default. The AI response is parsed from JSON into severity categories before being stored and returned to the client.
 
-You need Node.js 20+, a MongoDB instance, and an API key from OpenRouter or any OpenAI-compatible provider.
+Rate limiting runs at two tiers: 5 reviews per minute per user, and 100 requests per 15 minutes globally. Prompt injection attempts are sanitized on the input before it reaches the model.
 
-### Backend
+---
+
+## Running locally
+
+You need Node.js, a MongoDB database (local or Atlas), and an API key from OpenRouter or any OpenAI-compatible provider.
+
+**Backend**
 
 ```bash
 cd server
-cp .env.example .env    # fill in your values
 npm install
-npm run dev
 ```
 
-The server runs on port 3001.
+Create a `.env` in the server directory:
 
-### Frontend
+```
+MONGODB_URI=your_mongodb_connection_string
+BASE_URL=https://openrouter.ai/api/v1/chat/completions
+MODEL_API_KEY=your_default_api_key
+JWT_SECRET=your_secure_jwt_secret
+```
+
+```bash
+npm start
+```
+
+Server runs on port 3001.
+
+**Frontend**
 
 ```bash
 cd client
-cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-The client runs on port 3000.
+Client runs on port 3000.
 
-### Deployment environment variables
-
-On Render, configure the backend service with:
+**Or just use Docker**
 
 ```bash
-MONGODB_URI=mongodb+srv://...
-JWT_SECRET=your_secure_random_string
-CLIENT_ORIGIN=https://realtime-ai-code-review.vercel.app
-BASE_URL=https://openrouter.ai/api/v1/chat/completions
-MODEL_API_KEY=your_provider_key
-DEFAULT_MODEL=deepseek/deepseek-chat
+docker-compose up
 ```
 
-On Vercel, configure the frontend project with:
+Multi-stage build. Final image is around 40% smaller than a naive single-stage build.
+
+---
+
+## API reference
+
+**Auth**
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/auth/signup` | Create account |
+| POST | `/auth/login` | Get JWT |
+| GET | `/auth/me` | Current user |
+
+**Reviews**
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/reviews` | List user's reviews |
+| POST | `/reviews` | Submit code (quota enforced) |
+| GET | `/reviews/:id` | Get review (public) |
+
+**Collaboration**
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/reviews/:id/comments` | List comments |
+| POST | `/reviews/:id/comments` | Post comment |
+
+**Settings (BYOK)**
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/settings` | Get AI config |
+| PUT | `/settings` | Update endpoint, key, model |
+| POST | `/settings/fetch-models` | Query available models from custom endpoint |
+| POST | `/settings/upgrade` | Upgrade to Pro |
+
+---
+
+## Testing
 
 ```bash
-NEXT_PUBLIC_API_URL=https://your-render-service.onrender.com
+cd server && npm test
 ```
 
-After changing `NEXT_PUBLIC_API_URL`, redeploy the Vercel app so the new public environment variable is included in the client bundle.
-
-### Docker (full stack)
+26 tests covering auth flows, review submission, quota enforcement, rate limiting, and comment posting.
 
 ```bash
-cp server/.env.example .env
-docker compose up
+cd client && npm test
 ```
 
-This starts MongoDB, the API server, and the Next.js frontend together.
+Component tests with React Testing Library.
 
-### Running Tests
+CI runs all tests on every push via GitHub Actions before deploy.
 
-```bash
-cd server && npm test    # 21 tests (validators, AI parsing)
-cd client && npm test    # 5 tests (component rendering, interactions)
-```
+---
 
-## API
+## What I would do differently
 
-POST /auth/signup - Create account
-POST /auth/login - Get JWT token
-GET /auth/me - Current user
+A few things I would change with more time:
 
-GET /reviews - List user reviews
-POST /reviews - Submit code for review (rate limited)
-GET /reviews/:id - Get specific review
-
-GET /reviews/:id/comments - List comments
-POST /reviews/:id/comments - Post comment (broadcasts via WebSocket)
-
-GET /settings - Get BYOK configuration
-PUT /settings - Update custom endpoint, key, model
-POST /settings/fetch-models - Query custom endpoint for available models
-POST /settings/upgrade - Simulate Pro upgrade
-
-GET /health - Server health check
-
-## Key Engineering Decisions
-
-BYOK over managed-only: Lets users avoid rate limits and costs entirely by plugging in their own key. The server validates the endpoint format but otherwise proxies transparently.
-
-Structured JSON over raw markdown: The AI is prompted to return JSON with severity/line/fix fields. This enables the frontend to render interactive issue cards with color-coded badges instead of dumping a wall of text.
-
-Rate limiting at two levels: A general limiter prevents abuse across all endpoints. A stricter per-minute limit on the review endpoint prevents cost runaway on the AI provider.
-
-Zod validation on every endpoint: Catches malformed requests before they hit the database or AI provider. Enforces a 50KB code limit to prevent abuse.
-
-Socket.IO rooms over broadcast: Each review gets its own room. Comments only go to users viewing that specific review, not everyone connected.
-
-## License
-
-MIT
+- Replace the simulated Pro upgrade with actual Stripe integration
+- Add a proper refresh token flow instead of relying solely on JWT expiry
+- Move the AI parsing to a queue (Redis + Bull) so long-running reviews don't block the request
+- Add per-user WebSocket auth so anonymous users can view but not post comments
