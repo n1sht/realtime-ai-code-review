@@ -8,6 +8,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import connectDB from "./db.js";
 import logger from "./lib/logger.js";
+import { createCorsOptions } from "./lib/cors.js";
 import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/auth.js";
 import settingsRoutes from "./routes/settings.js";
@@ -17,35 +18,7 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-const allowedOrigins = (
-  process.env.CLIENT_ORIGIN ||
-  "http://localhost:3000,https://realtime-ai-code-review.vercel.app"
-)
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const isAllowedOrigin = (origin) => {
-  if (!origin) return true;
-
-  return allowedOrigins.some((allowedOrigin) => {
-    if (allowedOrigin === origin) return true;
-    if (!allowedOrigin.includes("*")) return false;
-
-    const pattern = new RegExp(
-      `^${allowedOrigin.split("*").map(escapeRegex).join(".*")}$`,
-    );
-    return pattern.test(origin);
-  });
-};
-
-const corsOptions = {
-  origin(origin, callback) {
-    callback(null, isAllowedOrigin(origin));
-  },
-};
+const corsOptions = createCorsOptions();
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
